@@ -1,0 +1,92 @@
+[
+  {
+    "objectID": "spellops.html",
+    "href": "spellops.html",
+    "title": "spellops",
+    "section": "",
+    "text": "import io\nfrom contextlib import redirect_stdout\n\ndef test_eq_stdout(f, expected):\n    \"\"\"\n    Test if the output of function `f` matches the expected string.\n    \n    Args:\n        f (callable): A parameterless function that prints to stdout.\n        expected (str): The expected printed output.\n    \n    Raises:\n        AssertionError: If the output does not match the expected string.\n    \"\"\"\n    buffer = io.StringIO()\n    with redirect_stdout(buffer):f()\n    output = buffer.getvalue().strip()\n    test_eq(output,expected)\n\n\nfrom fastcore.test import test_fail\n\ndef my_function(): print(\"Hello, world!\")\n\n# Successful test\ntest_eq_stdout(my_function, \"Hello, world!\")\n\n# Failing test\ntest_fail(lambda: test_eq_stdout(my_function, \"Hello, world ?\"))",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "spellops.html#testing-utilities",
+    "href": "spellops.html#testing-utilities",
+    "title": "spellops",
+    "section": "",
+    "text": "import io\nfrom contextlib import redirect_stdout\n\ndef test_eq_stdout(f, expected):\n    \"\"\"\n    Test if the output of function `f` matches the expected string.\n    \n    Args:\n        f (callable): A parameterless function that prints to stdout.\n        expected (str): The expected printed output.\n    \n    Raises:\n        AssertionError: If the output does not match the expected string.\n    \"\"\"\n    buffer = io.StringIO()\n    with redirect_stdout(buffer):f()\n    output = buffer.getvalue().strip()\n    test_eq(output,expected)\n\n\nfrom fastcore.test import test_fail\n\ndef my_function(): print(\"Hello, world!\")\n\n# Successful test\ntest_eq_stdout(my_function, \"Hello, world!\")\n\n# Failing test\ntest_fail(lambda: test_eq_stdout(my_function, \"Hello, world ?\"))",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "spellops.html#tee-operator",
+    "href": "spellops.html#tee-operator",
+    "title": "spellops",
+    "section": "tee operator",
+    "text": "tee operator\ntee is a debugging and documentation tool that prints the current state of data transformation while allowing the chain to continue. Like its Unix namesake, it lets you “peek” at data flowing through a pipeline without interrupting it.\nSample use cases: 1. Debug Data Transformations 2. Document Pipeline Steps 3. Custom Visualization 4. Development/Teaching\n\n\nL.tee\n\n L.tee (msg=None, f=&lt;function _default_print&gt;, show=True, **kwargs)\n\n\n# Unit tests\n\n# Default tests\ntest_eq_stdout(lambda:  L([1,2,3]).tee(),  \"[1, 2, 3]\")\ntest_eq_stdout(lambda:  L([1,2,3]).tee('values'),  \"values\\n[1, 2, 3]\")\ntest_eq_stdout(lambda:  L([1,2,3]).tee('values', sep=':'),  \"values:[1, 2, 3]\")\n\n# Advanced print\ndef my_print(x,msg,symbol): print(f'{symbol} {msg} : {x}')\ntest_eq_stdout(lambda:  L([1,2,3]).tee('values', f=my_print, symbol='!'),  \"! values : [1, 2, 3]\")\n\n\n# 1. Debug Data Transformations\n(L(['1.2', '3.4', '-2.1'])\n    .map(float).tee('After converting to float')\n    .map(abs).tee('After taking absolute values'))\n\nAfter converting to float\n[1.2, 3.4, -2.1]\nAfter taking absolute values\n[1.2, 3.4, 2.1]\n\n\n(#3) [1.2,3.4,2.1]\n\n\n\n# 2. Document Pipeline Steps\n(L(['12', 'abc', '23', '0', 'x'])\n    .map(lambda x: x if x.isdigit() else None).tee('Converted to int or None')\n    .filter(lambda x: x is not None).tee('Filtered out non-numbers'))\n\nConverted to int or None\n['12', None, '23', '0', None]\nFiltered out non-numbers\n['12', '23', '0']\n\n\n(#3) ['12','23','0']\n\n\n\n# 3. Custom Visualization (using emoji for fun)\ncustom_print = lambda x, msg: print(f\"🔍 {msg}: {[f'item_{i}:{v}' for i,v in enumerate(x)]}\")\n(L([1, 2, 3, 4])\n    .map(lambda x: x*2).tee('Doubled values', f=custom_print))\n\n🔍 Doubled values: ['item_0:2', 'item_1:4', 'item_2:6', 'item_3:8']\n\n\n(#4) [2,4,6,8]\n\n\n\n# 4. Development/Teaching\n(L([{'a':1}, {'a':2}, {'a':3}])\n    .tee('Starting with dictionaries')\n    .map(lambda d: d['a']).tee('Extracted \"a\" values')\n    .map(lambda x: x+10).tee('Added 10 to each value'))\n\nStarting with dictionaries\n[{'a': 1}, {'a': 2}, {'a': 3}]\nExtracted \"a\" values\n[1, 2, 3]\nAdded 10 to each value\n[11, 12, 13]\n\n\n(#3) [11,12,13]\n\n\nWith tee you can inspect the state of your pipeline with arbitrary complex functions:\n\nimport numpy as np\n\ndef print_as_matrix(x:L, msg):\n    print(msg)\n    N = len(x)\n    rows = len(x[0])\n    for r in range(rows):\n        row_str = (L([o[r] for o in x]).map(lambda o: ''.join(map(str,o))))\n        row_str = '  '.join(row_str)\n        print(row_str)\n\n# Sums all the values of the first row of all matrices after rotating them of 90 degree\n(L([[[0,0,0],[1,1,1],[0,0,0]],[[1,0,0],[0,1,0],[0,0,1]]])   .tee('Input images',f=print_as_matrix)\n    .map(lambda x: np.rot90(x,k=1))     .tee('Rotate 90 degree',f=print_as_matrix)\n    .map(lambda x: x[0].tolist())       .tee('Take first row')\n    .map(sum)                           .tee('Sum element in list')\n    .sum()\n)\n\nInput images\n000  100\n111  010\n000  001\nRotate 90 degree\n010  001\n010  010\n010  100\nTake first row\n[[0, 1, 0], [0, 0, 1]]\nSum element in list\n[1, 1]\n\n\n2\n\n\ntee supports even rich “inspection” with external libraries such as matplotlib.\n\n# Advance tee\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef plot_images(x:L, msg):\n    N = len(x)\n    plt.figure(figsize=(4*N,4))\n    for i,o in enumerate(x):\n        plt.subplot(1,N,i+1)\n        plt.imshow(o)\n        plt.title(f'IMG: {i}')\n    plt.suptitle(msg)\n\n(L([[[0,0,0],[1,1,1],[0,0,0]],[[1,0,0],[0,1,0],[0,0,1]]])  .tee('Input images',f=plot_images)\n    .map(lambda x: np.rot90(x,k=1)) .tee('Rotate 90 degree',f=plot_images)\n)\n\n(#2) [array([[0, 1, 0],\n       [0, 1, 0],\n       [0, 1, 0]]),array([[0, 0, 1],\n       [0, 1, 0],\n       [1, 0, 0]])]",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "spellops.html#pipe-operator",
+    "href": "spellops.html#pipe-operator",
+    "title": "spellops",
+    "section": "pipe operator",
+    "text": "pipe operator\npipe applies a function to the entire L collection, rather than to individual elements (like map does). With wrap=True (default) it returns an L for chaining, with wrap=False it returns the raw result.\nNOTE: pipen(f) is an alias to pipe(f,wrap=False)\n\n\nL.starpipe\n\n L.starpipe (f, wrap=True)\n\n\n\n\nL.pipe\n\n L.pipe (f, wrap=True)\n\n\ntest_eq(L([1,2,3]).pipe(len),L(3))\ntest_eq(L([1,2,3]).pipe(len, wrap=False),3)\ntest_eq(L([1,3]).starpipe(lambda a,b: a+b),L(4))\ntest_eq(L([1,3]).starpipe(lambda a,b: a+b, wrap=False),4)\n\n\n\n\nL.starpipen\n\n L.starpipen (f)\n\n\n\n\nL.pipen\n\n L.pipen (f)\n\n\ntest_eq(L([1,2,3]).pipen(len),3)\ntest_eq(L([1,3]).starpipen(lambda a,b: a+b),4)\n\n\n# Count how many elements of a reference set are present in a L\nL([1,2,3,2]).pipe(lambda x: set(x).intersection({1,3,5})).pipe(len,wrap=False)\n\n2\n\n\n\nL(['a', 'b', 'c']).pipe('-&gt;'.join, wrap=False)\n\n'a-&gt;b-&gt;c'\n\n\n\n# Using the convenience `pipen`\nL(['a', 'b', 'c']).pipen('-&gt;'.join)\n\n'a-&gt;b-&gt;c'\n\n\nYou can solve this line by line and have it documented step by step:\n\n# Count how many elements are present in both sublists using a function with two parameters\n(L([[1,2,3,2],[2,4,1]])    .tee('input')\n     .map(set)             .tee('to set')\n     .starpipe(set.intersection)  .tee('common elements')\n     .pipe(len, wrap=False)\n)\n\ninput\n[[1, 2, 3, 2], [2, 4, 1]]\nto set\n[{1, 2, 3}, {1, 2, 4}]\ncommon elements\n[1, 2]\n\n\n2\n\n\nOr you can abstract part of the computation away and have it delegated to a custom function:\n\n# Count how many elements are present in both sublists using a function with two parameters\ndef count_intersection(a,b): return len(set(a)&set(b))\nL([[1,2,3,2],[2,4,1]]).starpipe(count_intersection,wrap=False)\n\n2",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "spellops.html#unwrap-operator",
+    "href": "spellops.html#unwrap-operator",
+    "title": "spellops",
+    "section": "unwrap operator",
+    "text": "unwrap operator\nunwrap safely extracts a single value from an L collection, returning None for empty lists and raising an error if there are multiple elements. It’s designed to safely terminate L-chains when you expect exactly one result.\n\n\nL.unwrap\n\n L.unwrap ()\n\n\ntest_eq(L([1]).unwrap(),1)\ntest_eq(L([]).unwrap(),None)\ntest_fail(lambda: L([1,2]).unwrap())\n\n\n# Count how many elements are present in both sublists\n(L([[1,2,3,2],[2,4,1]])    .tee('input')\n     .map(set)             .tee('to set')\n     .starpipe(set.intersection)  .tee('common elements')\n     .pipe(len)            .tee('count elements')\n     .unwrap()\n)\n\ninput\n[[1, 2, 3, 2], [2, 4, 1]]\nto set\n[{1, 2, 3}, {1, 2, 4}]\ncommon elements\n[1, 2]\ncount elements\n[2]\n\n\n2",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "spellops",
+    "section": "",
+    "text": "Instead of writing this:\nL(f_c(L(...).map(f_a).filter(f_b))).map(f_d)[0]\nWith spellops’s pipe operator, you can visually maintain the order of execution (f_a → filter(f_b) → f_c → f_d) by writing this:\nL(...).map(f_a).filter(f_b).pipe(f_c).map(f_d)[0]\nAnd with tee operator, you can inspect and document your pipeline like this:\n(L(...)             .tee('input data')\n    .map(f_a)       .tee('apply f_a to individual elements')\n    .filter(f_b)    .tee('filter by f_b')\n    .pipe(f_c)      .tee('apply f_c to the whole list')\n    .map(f_d)[0]    .tee('finally apply f_d to the resulting elements and returning first value')\n)\nAnd once you’re done, you can keep all of this in your production code:\ndef process(data,verbose=False):\n    s = dict(show=verbose)\n    return (L(data)     .tee('input data', **s)\n        .map(f_a)       .tee('apply f_a to individual elements', **s)\n        .filter(f_b)    .tee('filter by f_b', **s)\n        .pipe(f_c)      .tee('apply f_c to the whole list', **s)\n        .map(f_d)       .tee('finally apply f_d to the resulting elements and returning first value', **s)\n        .unwrap()       # Extract the element out of the list\n    )\nHere are some examples:",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "index.html#developer-guide",
+    "href": "index.html#developer-guide",
+    "title": "spellops",
+    "section": "",
+    "text": "Instead of writing this:\nL(f_c(L(...).map(f_a).filter(f_b))).map(f_d)[0]\nWith spellops’s pipe operator, you can visually maintain the order of execution (f_a → filter(f_b) → f_c → f_d) by writing this:\nL(...).map(f_a).filter(f_b).pipe(f_c).map(f_d)[0]\nAnd with tee operator, you can inspect and document your pipeline like this:\n(L(...)             .tee('input data')\n    .map(f_a)       .tee('apply f_a to individual elements')\n    .filter(f_b)    .tee('filter by f_b')\n    .pipe(f_c)      .tee('apply f_c to the whole list')\n    .map(f_d)[0]    .tee('finally apply f_d to the resulting elements and returning first value')\n)\nAnd once you’re done, you can keep all of this in your production code:\ndef process(data,verbose=False):\n    s = dict(show=verbose)\n    return (L(data)     .tee('input data', **s)\n        .map(f_a)       .tee('apply f_a to individual elements', **s)\n        .filter(f_b)    .tee('filter by f_b', **s)\n        .pipe(f_c)      .tee('apply f_c to the whole list', **s)\n        .map(f_d)       .tee('finally apply f_d to the resulting elements and returning first value', **s)\n        .unwrap()       # Extract the element out of the list\n    )\nHere are some examples:",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "index.html#import-l-and-spellops",
+    "href": "index.html#import-l-and-spellops",
+    "title": "spellops",
+    "section": "Import L and spellops",
+    "text": "Import L and spellops\nNOTE: order of import does not matters.\n\nimport spellops\nfrom fastcore.foundation import L\n\n\nFluent string manipulaiton\n\nL(['a', 'b', 'c']).map(str.upper).pipe('-&gt;'.join, wrap=False)\n\n'A-&gt;B-&gt;C'\n\n\nOr using convenience mehtod pipen that stands for pipe with wrap=False (no wrap):\n\nL(['a', 'b', 'c']).map(str.upper).pipen('-&gt;'.join)\n\n'A-&gt;B-&gt;C'\n\n\n\n\nCount how many elements are present in both sublists\n\n(L([[1,2,3,2],[2,4,1]])    .tee('input')\n     .map(set)             .tee('to set')\n     .starpipe(set.intersection)  .tee('common elements')\n     .pipe(len)            .tee('count elements')\n     .unwrap()\n)\n\ninput\n[[1, 2, 3, 2], [2, 4, 1]]\nto set\n[{1, 2, 3}, {1, 2, 4}]\ncommon elements\n[1, 2]\ncount elements\n[2]\n\n\n2\n\n\nAn alternative approach can be to pipe with wrap=False:\nNOTE: In this case, you can’t use tee after the final pipe operator because it no longer returns an L instance.\n\n(L([[1,2,3,2],[2,4,1]])    .tee('input')\n     .map(set)             .tee('to set')\n     .starpipe(set.intersection)  .tee('common elements')\n     .pipe(len, wrap=False) # count elements\n)\n\ninput\n[[1, 2, 3, 2], [2, 4, 1]]\nto set\n[{1, 2, 3}, {1, 2, 4}]\ncommon elements\n[1, 2]\n\n\n2\n\n\n\n\nSolve an AoC task\nSPOILER ALERT: the following is a speLL to solve AoC 2024 part B.\nGOAL: For each number in the left list, we need to count how many times it appears in the right list, multiply these together, and sum all results. This creates a “similarity score”, counting occurrences and multiplying, that measures how frequently numbers from the left list appear in the right list.\n\nsample = '''3   4\n4   3\n2   5\n1   3\n3   9\n3   3\n'''\n\n# This function will be \"mapped\" to individual elements\ndef to_int_tuple(a,b): return (int(a),int(b))\n\n# this function acts on the whole list\ndef count_instances(As,Bs): return [(o,len([t for t in Bs if t==o])) for  o in As]\n\nfrom math import prod\n(L(sample.splitlines())\n                .map(str.split)         .tee('input data')\n                .starmap(to_int_tuple)  .tee('int to tuples')\n                .zip(cycled=True)       .tee('tuple of lists')\n                .starpipe(count_instances)  .tee('apply count_instances to the \"whole list\"')\n                .map(prod)              .tee('multiply tuple elements')\n                .sum()\n    )\n\ninput data\n[['3', '4'], ['4', '3'], ['2', '5'], ['1', '3'], ['3', '9'], ['3', '3']]\nint to tuples\n[(3, 4), (4, 3), (2, 5), (1, 3), (3, 9), (3, 3)]\ntuple of lists\n[(3, 4, 2, 1, 3, 3), (4, 3, 5, 3, 9, 3)]\napply count_instances to the \"whole list\"\n[(3, 3), (4, 1), (2, 0), (1, 0), (3, 3), (3, 3)]\nmultiply tuple elements\n[9, 4, 0, 0, 9, 9]\n\n\n31\n\n\n\n\nVisually inspect images transformations:\n\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef plot_images(x:L, msg):\n    N = len(x)\n    plt.figure(figsize=(4*N,4))\n    for i,o in enumerate(x):\n        plt.subplot(1,N,i+1)\n        plt.imshow(o)\n        plt.title(f'Image: {i}')\n    plt.suptitle(msg)\n\n(L([[[0,0,0],[1,1,1],[0,0,0]],[[1,0,0],[0,1,0],[0,0,1]]])  .tee('Input images',f=plot_images)\n    .map(lambda x: np.rot90(x,k=1)) .tee('Rotate 90 degree',f=plot_images)\n)\n\n(#2) [array([[0, 1, 0],\n       [0, 1, 0],\n       [0, 1, 0]]),array([[0, 0, 1],\n       [0, 1, 0],\n       [1, 0, 0]])]\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInstall spellops in Development mode\n# make sure spellops package is installed in development mode\n$ pip install -e .\n\n# make changes under nbs/ directory\n# ...\n\n# compile to have changes apply to spellops\n$ nbdev_prepare",
+    "crumbs": [
+      "spellops"
+    ]
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "spellops",
+    "section": "Usage",
+    "text": "Usage\n\nInstallation\nInstall latest from the GitHub repository:\n$ pip install git+https://github.com/artste/spellops.git\nor from pypi\n$ pip install spellops",
+    "crumbs": [
+      "spellops"
+    ]
+  }
+]
