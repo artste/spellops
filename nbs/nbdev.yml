@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "spellops"
+  site-url: "https://artste.github.io/spellops"
+  description: "Harness the power of speLL with spellops to write clean and readable pipelines."
+  repo-branch: main
+  repo-url: "https://github.com/artste/spellops"
