@@ -46,6 +46,15 @@ def process(data,verbose=False):
 
 Here are some examples:
 
+## Import `L` and `spellops`
+
+NOTE: order of import does not matters.
+
+``` python
+import spellops
+from fastcore.foundation import L
+```
+
 ### Fluent string manipulaiton
 
 ``` python
@@ -182,9 +191,9 @@ def plot_images(x:L, msg):
            [0, 1, 0],
            [1, 0, 0]])]
 
-![](index_files/figure-commonmark/cell-7-output-2.png)
+![](index_files/figure-commonmark/cell-8-output-2.png)
 
-![](index_files/figure-commonmark/cell-7-output-3.png)
+![](index_files/figure-commonmark/cell-8-output-3.png)
 
 ### Install spellops in Development mode
 
